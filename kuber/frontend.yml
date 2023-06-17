@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  labels:
+    name: frontend
+spec:
+  selector:
+    name: frontend
+  type: NodePort            # NodePort service
+  ports:
+  - port: 8050
+    nodePort: 31000        # external port
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    name: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: frontend
+  template:
+    metadata:
+      labels:
+        name: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: moskst/app:latest
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 200m
+            memory: 300Mi
+        env:
+          - name: RABBITMQ_ADDRES
+            value: rabbitmq-internal
+          - name: FRONT_ADDR
+            value: 0.0.0.0
+        ports:
+          - name: http
+            containerPort: 8050
+

@@ -1,0 +1,11 @@
+FROM python:3.9.17-alpine
+
+RUN pip install pika dash
+
+WORKDIR /client/
+
+ADD app.py /client/
+
+CMD [ "python", "./app.py" ]
+
+EXPOSE 8050/tcp

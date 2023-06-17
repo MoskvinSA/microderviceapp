@@ -1,0 +1,72 @@
+version: "3.9"
+services:
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: "user"
+      RABBITMQ_DEFAULT_PASS: "password"
+    networks:
+      mynet:
+        ipv4_address: 10.0.0.2
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+  couchserver:
+    image: couchdb:3
+    container_name: couchdb
+    restart: always
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: password
+    networks:
+      mynet:
+        ipv4_address: 10.0.0.3
+    ports:
+      - "5984:5984"
+    volumes:
+        - ./dbdata:/opt/couchdb/data   
+
+  word:
+    image: word:latest
+    container_name: word
+    restart: always
+    environment:
+      RABBITMQ_ADDRES: 10.0.0.2
+    networks:
+      mynet:
+        ipv4_address: 10.0.0.4
+
+  number:
+    image: number:latest
+    container_name: number
+    restart: always
+    environment:
+      RABBITMQ_ADDRES: 10.0.0.2
+    networks:
+      mynet:
+        ipv4_address: 10.0.0.5
+
+  frontend:
+    image: app:latest
+    container_name: frontend
+    restart: always
+    environment:
+      - RABBITMQ_ADDRES=10.0.0.2
+    ports:
+      - "8050:8050"
+    networks:
+      mynet:
+        ipv4_address: 10.0.0.6
+      
+networks:
+  mynet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 10.0.0.0/20
+        gateway: 10.0.0.1

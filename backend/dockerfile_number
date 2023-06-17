@@ -1,0 +1,9 @@
+FROM python:3.9.17-alpine
+
+RUN pip install pika couchdb
+
+ADD number.py /number/
+
+WORKDIR /number/
+
+CMD [ "python3", "./number.py" ]

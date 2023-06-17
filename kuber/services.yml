@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: word
+  labels:
+    name: word
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: word
+  template:
+    metadata:
+      labels:
+        name: word
+    spec:
+      containers:
+      - name: word
+        image: moskst/word:latest
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 200m
+            memory: 300Mi
+        env:
+          - name: RABBITMQ_ADDRES
+            value: rabbitmq-internal
+          - name: COUCHDB_ADDRES
+            value: couch-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: number
+  labels:
+    name: number
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: number
+  template:
+    metadata:
+      labels:
+        name: number
+    spec:
+      containers:
+      - name: number
+        image: moskst/number:latest
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 200m
+            memory: 300Mi
+        env:
+          - name: RABBITMQ_ADDRES
+            value: rabbitmq-internal
+          - name: COUCHDB_ADDRES
+            value: couch-service

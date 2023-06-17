@@ -1,0 +1,9 @@
+FROM python:3.9.17-alpine
+
+RUN pip install pika couchdb
+
+ADD word.py /word/
+
+WORKDIR /word/
+
+CMD [ "python3", "./word.py" ]

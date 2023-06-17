@@ -1,0 +1,110 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: couch-vol-sigma
+  labels:
+    type: local
+  annotations:
+    volume.alpha.kubernetes.io/storage-class: couch-vol-sigma
+spec:
+  storageClassName: couch-vol-sigma
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/opt/couchdb/data"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: couch-pvc
+spec:
+  storageClassName: couch-vol-sigma
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: couchdb
+  labels:
+    app: couch
+spec:
+  replicas: 1
+  serviceName: "couch-service"
+  selector:
+    matchLabels:
+      app: couch
+  template:
+    metadata:
+      labels:
+        app: couch # pod label
+    spec:
+      containers:
+      - name: couchdb
+        image: couchdb:3
+        env:
+        - name: NODE_NETBIOS_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODENAME
+          value: $(NODE_NETBIOS_NAME).couch-service # FQDN in vm.args
+        - name: COUCHDB_USER
+          value: admin
+        - name: COUCHDB_PASSWORD
+          value: admin
+        - name: COUCHDB_SECRET
+          value: couchsecret
+        - name: ERL_FLAGS
+          value: "-name couchdb@$(NODENAME) -setcookie couchsecret"
+        ports:
+        - name: couchdb
+          containerPort: 5984
+        - name: epmd
+          containerPort: 4369
+        - containerPort: 9100
+        volumeMounts:
+          - name: couch-pvc
+            mountPath: /opt/couchdb/data
+      volumes:
+        - name: couch-pvc
+          persistentVolumeClaim:
+            claimName: couch-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: couch-service
+  namespace: default
+  labels:
+    app: couch
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 5984
+    protocol: TCP
+    targetPort: 5984
+  selector:
+    app: couch         # label selector
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: couch-nodep-svc 
+  labels:
+    app: couch
+spec:
+  type: NodePort            # NodePort service
+  ports:
+  - port: 5984
+    nodePort: 30984         # external port
+    protocol: TCP
+  selector:
+    app: couch       # label selector
